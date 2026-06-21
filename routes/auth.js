@@ -4,7 +4,7 @@ const fs = require('fs');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = 'secret123';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Signup
 router.post('/signup', async (req, res) => { 
