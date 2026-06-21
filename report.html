@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title> Performance Analysis Report </title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<style>
+  /* ===== CSS VARIABLES ===== */
+  :root {
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #111827;
+    --bg-card: #1a2234;
+    --bg-card-hover: #1f2a40;
+    --border-color: #2a3650;
+    --text-primary: #f0f4ff;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent: #7c5cff;
+    --accent-light: #a78bfa;
+    --accent-gradient: linear-gradient(135deg, #7c5cff, #60a5fa);
+    --green: #34d399;
+    --green-bg: rgba(52, 211, 153, 0.1);
+    --red: #f87171;
+    --red-bg: rgba(248, 113, 113, 0.1);
+    --yellow: #fbbf24;
+    --yellow-bg: rgba(251, 191, 36, 0.1);
+    --blue: #60a5fa;
+    --blue-bg: rgba(96, 165, 250, 0.1);
+    --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    --radius: 16px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ===== RESET & BASE ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+  ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent-light); }
+
+  /* ===== LAYOUT ===== */
+  .app-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 24px 32px 40px;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0 24px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--accent-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: white;
+  }
+  
+  .header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  
+  .header h1 span {
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .header-sub {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 400;
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .status-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--green-bg);
+    color: var(--green);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+  }
+  
+  .status-badge.warning {
+    background: var(--yellow-bg);
+    color: var(--yellow);
+    border-color: rgba(251, 191, 36, 0.3);
+  }
+  
+  .status-badge.danger {
+    background: var(--red-bg);
+    color: var(--red);
+    border-color: rgba(248, 113, 113, 0.3);
+  }
+
+  /* ===== FILE UPLOAD ===== */
+  .upload-area {
+    background: var(--bg-secondary);
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius);
+    padding: 40px;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+    margin-bottom: 28px;
+  }
+  
+  .upload-area:hover {
+    border-color: var(--accent);
+    background: var(--bg-card);
+  }
+  
+  .upload-area.dragover {
+    border-color: var(--accent);
+    background: rgba(124, 92, 255, 0.05);
+  }
+  
+  .upload-icon {
+    font-size: 48px;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  
+  .upload-area h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  
+  .upload-area p {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+  
+  .upload-area code {
+    background: var(--bg-card);
+    padding: 2px 10px;
+    border-radius: 6px;
+    color: var(--accent-light);
+    font-size: 13px;
+  }
+  
+  .file-input-hidden { display: none; }
+  
+  .upload-progress {
+    display: none;
+    margin-top: 16px;
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--bg-card);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: var(--accent-gradient);
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  /* ===== METRICS GRID ===== */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  
+  .metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    transition: var(--transition);
+  }
+  
+  .metric-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+  
+  .metric-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .metric-value {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  
+  .metric-value .unit {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-left: 4px;
+  }
+  
+  .metric-change {
+    font-size: 12px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .metric-change.up { color: var(--green); }
+  .metric-change.down { color: var(--red); }
+  .metric-change.neutral { color: var(--text-secondary); }
+  
+  .status-ok { color: var(--green); }
+  .status-warn { color: var(--yellow); }
+  .status-danger { color: var(--red); }
+
+  /* ===== PANELS ===== */
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    transition: var(--transition);
+  }
+  
+  .panel:hover {
+    border-color: rgba(124, 92, 255, 0.3);
+  }
+  
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .panel-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .panel-header h2 i {
+    color: var(--accent);
+  }
+  
+  .panel-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 20px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+  }
+
+  /* ===== CHARTS ===== */
+  .chart-container {
+    position: relative;
+    height: 320px;
+  }
+  
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+  }
+  
+  @media (max-width: 1024px) {
+    .chart-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ===== TABLE ===== */
+  .table-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  
+  .table-controls select,
+  .table-controls input {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-family: inherit;
+    transition: var(--transition);
+    min-width: 140px;
+  }
+  
+  .table-controls select:focus,
+  .table-controls input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.1);
+  }
+  
+  .table-controls input {
+    min-width: 200px;
+    flex: 1;
+  }
+  
+  .table-controls .count-badge {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  
+  .table-wrap {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    max-height: 520px;
+    overflow-y: auto;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  thead th {
+    background: var(--bg-secondary);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    user-select: none;
+    transition: var(--transition);
+  }
+  
+  thead th:hover {
+    color: var(--text-primary);
+  }
+  
+  thead th .sort-icon {
+    margin-left: 4px;
+    opacity: 0.4;
+  }
+  
+  thead th.active .sort-icon {
+    opacity: 1;
+    color: var(--accent);
+  }
+  
+  tbody tr {
+    transition: var(--transition);
+    border-bottom: 1px solid rgba(42, 54, 80, 0.3);
+  }
+  
+  tbody tr:hover {
+    background: rgba(124, 92, 255, 0.04);
+  }
+  
+  tbody td {
+    padding: 10px 16px;
+    vertical-align: middle;
+  }
+  
+  .method-pill {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  
+  .method-pill.GET { background: var(--green-bg); color: var(--green); }
+  .method-pill.POST { background: var(--blue-bg); color: var(--blue); }
+  .method-pill.PUT { background: var(--yellow-bg); color: var(--yellow); }
+  .method-pill.DELETE { background: var(--red-bg); color: var(--red); }
+  .method-pill.PATCH { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
+  
+  .status-pill {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  
+  .status-pill.success { background: var(--green-bg); color: var(--green); }
+  .status-pill.error { background: var(--red-bg); color: var(--red); }
+  .status-pill.warning { background: var(--yellow-bg); color: var(--yellow); }
+  .status-pill.info { background: var(--blue-bg); color: var(--blue); }
+  
+  .url-cell {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  
+  .duration-cell {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  
+  .duration-cell.slow { color: var(--yellow); }
+  .duration-cell.very-slow { color: var(--red); }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-secondary);
+  }
+  
+  .empty-state .icon {
+    font-size: 64px;
+    color: var(--accent);
+    opacity: 0.5;
+    margin-bottom: 20px;
+  }
+  
+  .empty-state h3 {
+    font-size: 20px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  
+  .empty-state p {
+    font-size: 14px;
+    max-width: 500px;
+    margin: 0 auto 16px;
+  }
+  
+  .empty-state code {
+    background: var(--bg-card);
+    padding: 4px 14px;
+    border-radius: 6px;
+    color: var(--accent-light);
+    font-size: 13px;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .app-container { padding: 16px; }
+    .header { flex-direction: column; align-items: flex-start; }
+    .metrics-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .metric-value { font-size: 22px; }
+    .table-controls { flex-direction: column; }
+    .table-controls input { min-width: 100%; }
+    .panel { padding: 16px; }
+  }
+  
+  @media (max-width: 480px) {
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .upload-area { padding: 24px; }
+  }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.5s ease forwards;
+  }
+  
+  .delay-1 { animation-delay: 0.05s; }
+  .delay-2 { animation-delay: 0.1s; }
+  .delay-3 { animation-delay: 0.15s; }
+  .delay-4 { animation-delay: 0.2s; }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-icon"><i class="fas fa-rocket"></i></div>
+      <div>
+        <h1>Performance <span>Analysis</span></h1>
+        <div class="header-sub"><i class="fas fa-code"></i> JWT Authentication API Load Test</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="status-badge" id="statusBadge"><i class="fas fa-circle" style="font-size: 8px; margin-right: 6px;"></i> Ready</span>
+      <span style="color: var(--text-secondary); font-size: 13px;" id="fileInfo"></span>
+    </div>
+  </header>
+
+  <!-- ===== UPLOAD AREA ===== -->
+  <div class="upload-area" id="uploadArea">
+    <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+    <h3>Load Test Results</h3>
+    <p>Drag & drop your <code>results.json</code> file here or click to browse</p>
+    <div style="margin-top: 12px;">
+      <label style="display: inline-block; padding: 10px 28px; background: var(--accent-gradient); border-radius: 8px; color: white; font-weight: 600; font-size: 14px; cursor: pointer; transition: var(--transition);">
+        <i class="fas fa-folder-open"></i> Choose File
+        <input type="file" id="fileInput" class="file-input-hidden" accept=".json,.ndjson" />
+      </label>
+    </div>
+    <div class="upload-progress" id="uploadProgress">
+      <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;" id="progressText">Loading...</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CONTENT ===== -->
+  <div id="content" style="display: none;">
+
+    <!-- Metrics Grid -->
+    <div class="metrics-grid" id="metricsGrid"></div>
+
+    <!-- Charts Row -->
+    <div class="chart-grid">
+      <div class="panel fade-in">
+        <div class="panel-header">
+          <h2><i class="fas fa-chart-line"></i> Latency Over Time</h2>
+          <span class="panel-badge"><i class="far fa-clock"></i> Real-time</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="timeChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="panel fade-in">
+        <div class="panel-header">
+          <h2><i class="fas fa-chart-bar"></i> Distribution</h2>
+          <span class="panel-badge"><i class="fas fa-percent"></i> Histogram</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="histChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Percentiles Panel -->
+    <div class="panel fade-in">
+      <div class="panel-header">
+        <h2><i class="fas fa-bullseye"></i> Percentile Analysis</h2>
+        <span class="panel-badge"><i class="fas fa-chart-simple"></i> Response Time</span>
+      </div>
+      <div id="percentileGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px;"></div>
+    </div>
+
+    <!-- Request Log Table -->
+    <div class="panel fade-in">
+      <div class="panel-header">
+        <h2><i class="fas fa-list-ul"></i> Request Log</h2>
+        <span class="panel-badge" id="rowCount">0 requests</span>
+      </div>
+      
+      <div class="table-controls">
+        <select id="endpointFilter"><option value="">All Endpoints</option></select>
+        <select id="statusFilter"><option value="">All Statuses</option></select>
+        <select id="methodFilter"><option value="">All Methods</option></select>
+        <input type="text" id="searchBox" placeholder="🔍 Search URL or method..." />
+        <span class="count-badge" id="filterCount"></span>
+      </div>
+      
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-sort="idx" class="active"># <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+              <th data-sort="time">Time <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+              <th data-sort="method">Method <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+              <th data-sort="url">URL <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+              <th data-sort="status">Status <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+              <th data-sort="duration">Duration <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+              <th data-sort="waiting">Waiting <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
+            </tr>
+          </thead>
+          <tbody id="reqBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== EMPTY STATE ===== -->
+  <div id="emptyState" class="empty-state">
+    <div class="icon"><i class="fas fa-chart-pie"></i></div>
+    <h3>No Data Loaded</h3>
+    <p>Run your k6 load test and save the output as <code>results.json</code>, then upload it here.</p>
+    <div style="margin-top: 12px; background: var(--bg-card); border-radius: 8px; padding: 12px 20px; display: inline-block;">
+      <code style="color: var(--text-secondary);">k6 run --out json=results.json load-test.js</code>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== STATE =====
+let requests = [];
+let allDurationPoints = [];
+let timeChart = null;
+let histChart = null;
+let sortKey = 'idx';
+let sortDir = 1;
+
+// ===== DOM HELPERS =====
+const $ = (id) => document.getElementById(id);
+
+// ===== FILE HANDLING =====
+const uploadArea = $('uploadArea');
+const fileInput = $('fileInput');
+
+uploadArea.addEventListener('click', () => fileInput.click());
+
+uploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+  uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+});
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) processFile(file);
+});
+
+async function processFile(file) {
+  const progress = $('uploadProgress');
+  const fill = $('progressFill');
+  const text = $('progressText');
+  
+  progress.style.display = 'block';
+  fill.style.width = '30%';
+  text.textContent = ' Reading file...';
+  
+  const textContent = await file.text();
+  
+  fill.style.width = '70%';
+  text.textContent = ' Parsing data...';
+  
+  await new Promise(r => setTimeout(r, 100));
+  
+  parseNDJSON(textContent);
+  
+  fill.style.width = '100%';
+  text.textContent = ' Done!';
+  
+  setTimeout(() => {
+    progress.style.display = 'none';
+    fill.style.width = '0%';
+  }, 800);
+  
+  $('fileInfo').textContent = ` ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+}
+
+// ===== PARSER =====
+function parseNDJSON(text) {
+  const lines = text.split(/\r?\n/);
+  const byKey = new Map();
+  allDurationPoints = [];
+
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    let obj;
+    try { obj = JSON.parse(line); } catch { continue; }
+    if (obj.type !== 'Point') continue;
+    const tags = obj.data.tags || {};
+    if (!tags.url) continue;
+    const key = obj.data.time + '|' + tags.url + '|' + tags.method;
+
+    let rec = byKey.get(key);
+    if (!rec) {
+      rec = {
+        time: obj.data.time,
+        url: tags.url,
+        method: tags.method || 'GET',
+        status: tags.status || '200',
+        duration: null,
+        waiting: null,
+      };
+      byKey.set(key, rec);
+    }
+
+    if (obj.metric === 'http_req_duration') {
+      rec.duration = obj.data.value;
+      allDurationPoints.push({ t: new Date(obj.data.time), v: obj.data.value, url: tags.url });
+    } else if (obj.metric === 'http_req_waiting') {
+      rec.waiting = obj.data.value;
+    }
+  }
+
+  requests = [...byKey.values()]
+    .filter(r => r.duration !== null)
+    .sort((a, b) => new Date(a.time) - new Date(b.time))
+    .map((r, i) => ({ ...r, idx: i + 1 }));
+
+  if (requests.length === 0) {
+    alert('❌ No request data found. Make sure you run k6 with --out json=results.json');
+    return;
+  }
+
+  $('emptyState').style.display = 'none';
+  $('content').style.display = 'block';
+  
+  // Update status badge
+  const badge = $('statusBadge');
+  const failRate = requests.filter(r => !r.status || !r.status.startsWith('2')).length / requests.length;
+  if (failRate < 0.01) {
+    badge.className = 'status-badge';
+    badge.innerHTML = '<i class="fas fa-circle" style="font-size: 8px; margin-right: 6px;"></i> All Good';
+  } else if (failRate < 0.05) {
+    badge.className = 'status-badge warning';
+    badge.innerHTML = '<i class="fas fa-circle" style="font-size: 8px; margin-right: 6px;"></i> Minor Issues';
+  } else {
+    badge.className = 'status-badge danger';
+    badge.innerHTML = '<i class="fas fa-circle" style="font-size: 8px; margin-right: 6px;"></i> Needs Attention';
+  }
+
+  renderMetrics();
+  renderPercentiles();
+  renderTimeChart();
+  renderHistogram();
+  populateFilters();
+  renderTable();
+}
+
+// ===== RENDER METRICS =====
+function renderMetrics() {
+  const durs = requests.map(r => r.duration).sort((a, b) => a - b);
+  const sum = durs.reduce((s, v) => s + v, 0);
+  const fails = requests.filter(r => !r.status || !r.status.startsWith('2')).length;
+  const t0 = new Date(requests[0].time);
+  const t1 = new Date(requests[requests.length - 1].time);
+  const durSec = Math.max(0.1, (t1 - t0) / 1000);
+  const throughput = requests.length / durSec;
+  const failRate = (fails / requests.length * 100);
+
+  const metrics = [
+    { label: 'Total Requests', value: requests.length, unit: '', icon: 'fa-list', cls: '' },
+    { label: 'Throughput', value: throughput.toFixed(1), unit: 'req/s', icon: 'fa-tachometer-alt', cls: '' },
+    { label: 'Avg Response', value: (sum / durs.length).toFixed(2), unit: 'ms', icon: 'fa-clock', cls: '' },
+    { label: 'P95', value: durs[Math.floor(durs.length * 0.95)].toFixed(2), unit: 'ms', icon: 'fa-percent', cls: durs[Math.floor(durs.length * 0.95)] > 500 ? 'status-warn' : 'status-ok' },
+    { label: 'P99', value: durs[Math.floor(durs.length * 0.99)].toFixed(2), unit: 'ms', icon: 'fa-percent', cls: durs[Math.floor(durs.length * 0.99)] > 1000 ? 'status-danger' : 'status-warn' },
+    { label: 'Failure Rate', value: failRate.toFixed(1), unit: '%', icon: 'fa-exclamation-triangle', cls: failRate > 5 ? 'status-danger' : (failRate > 1 ? 'status-warn' : 'status-ok') },
+    { label: 'Min', value: durs[0].toFixed(2), unit: 'ms', icon: 'fa-arrow-down', cls: '' },
+    { label: 'Max', value: durs[durs.length - 1].toFixed(2), unit: 'ms', icon: 'fa-arrow-up', cls: durs[durs.length - 1] > 2000 ? 'status-danger' : '' },
+    { label: 'Test Duration', value: durSec.toFixed(0), unit: 's', icon: 'fa-hourglass-half', cls: '' },
+  ];
+
+  $('metricsGrid').innerHTML = metrics.map((m, i) => `
+    <div class="metric-card fade-in delay-${(i % 4) + 1}">
+      <div class="metric-label">
+        <i class="fas ${m.icon}" style="color: var(--accent);"></i>
+        ${m.label}
+      </div>
+      <div class="metric-value ${m.cls || ''}">
+        ${typeof m.value === 'number' && m.value % 1 !== 0 ? m.value : m.value.toLocaleString()}
+        <span class="unit">${m.unit}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== RENDER PERCENTILES =====
+function renderPercentiles() {
+  const durs = requests.map(r => r.duration).sort((a, b) => a - b);
+  const pcts = [50, 75, 90, 95, 99, 99.9];
+  
+  $('percentileGrid').innerHTML = pcts.map(p => {
+    const val = durs[Math.min(durs.length - 1, Math.floor(durs.length * p / 100))];
+    const cls = val > 1000 ? 'status-danger' : (val > 500 ? 'status-warn' : 'status-ok');
+    return `
+      <div style="background: var(--bg-secondary); border-radius: 10px; padding: 14px 18px; border: 1px solid var(--border-color);">
+        <div style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">P${p}</div>
+        <div style="font-size: 20px; font-weight: 700; ${cls === 'status-danger' ? 'color: var(--red)' : cls === 'status-warn' ? 'color: var(--yellow)' : 'color: var(--green)'}">
+          ${val.toFixed(2)} <span style="font-size: 12px; color: var(--text-secondary); font-weight: 400;">ms</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== CHARTS =====
+function renderTimeChart() {
+  const groups = new Map();
+  for (const p of allDurationPoints) {
+    let path = p.url;
+    try { path = new URL(p.url).pathname.replace(/\/\d+$/, '/:id'); } catch {}
+    if (!groups.has(path)) groups.set(path, []);
+    groups.get(path).push({ x: p.t, y: p.v });
+  }
+
+  const palette = ['#7c5cff', '#34d399', '#fbbf24', '#f87171', '#60a5fa', '#f472b6', '#a78bfa', '#22d3ee'];
+  const datasets = [...groups.entries()].map(([label, data], i) => ({
+    label: label.length > 25 ? label.substring(0, 22) + '...' : label,
+    data: data.sort((a, b) => a.x - b.x),
+    borderColor: palette[i % palette.length],
+    backgroundColor: palette[i % palette.length] + '22',
+    pointRadius: 1.5,
+    pointHoverRadius: 5,
+    borderWidth: 2,
+    tension: 0.3,
+    fill: true,
+  }));
+
+  if (timeChart) timeChart.destroy();
+  timeChart = new Chart($('timeChart'), {
+    type: 'line',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: false },
+      scales: {
+        x: { 
+          type: 'time', 
+          time: { unit: 'second' }, 
+          ticks: { color: '#64748b', maxTicksLimit: 20 },
+          grid: { color: 'rgba(42, 54, 80, 0.3)' }
+        },
+        y: { 
+          title: { display: true, text: 'Duration (ms)', color: '#64748b' },
+          ticks: { color: '#64748b' },
+          grid: { color: 'rgba(42, 54, 80, 0.3)' }
+        },
+      },
+      plugins: {
+        legend: { 
+          labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 14, padding: 12 } 
+        },
+        tooltip: { 
+          backgroundColor: '#1a2234',
+          borderColor: '#2a3650',
+          borderWidth: 1,
+          callbacks: { 
+            label: (c) => `${c.dataset.label}: ${c.parsed.y.toFixed(2)} ms` 
+          } 
+        },
+      },
+    },
+  });
+}
+
+function renderHistogram() {
+  const durs = requests.map(r => r.duration);
+  const min = Math.min(...durs);
+  const max = Math.max(...durs);
+  const bins = 25;
+  const width = (max - min) / bins || 1;
+  const counts = new Array(bins).fill(0);
+  for (const d of durs) {
+    const i = Math.min(bins - 1, Math.floor((d - min) / width));
+    counts[i]++;
+  }
+  const labels = counts.map((_, i) => (min + i * width).toFixed(1));
+
+  if (histChart) histChart.destroy();
+  histChart = new Chart($('histChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ 
+        label: 'Requests', 
+        data: counts, 
+        backgroundColor: 'rgba(124, 92, 255, 0.7)',
+        borderColor: '#7c5cff',
+        borderWidth: 1,
+        borderRadius: 4,
+        hoverBackgroundColor: 'rgba(124, 92, 255, 0.9)',
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { 
+          title: { display: true, text: 'Duration (ms)', color: '#64748b' },
+          ticks: { color: '#64748b', maxTicksLimit: 10 },
+          grid: { color: 'rgba(42, 54, 80, 0.2)' }
+        },
+        y: { 
+          title: { display: true, text: 'Count', color: '#64748b' },
+          ticks: { color: '#64748b' },
+          grid: { color: 'rgba(42, 54, 80, 0.2)' }
+        },
+      },
+      plugins: { 
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a2234',
+          borderColor: '#2a3650',
+          borderWidth: 1,
+          callbacks: {
+            label: (c) => `${c.parsed.y} requests in ${c.label}ms range`
+          }
+        }
+      },
+    },
+  });
+}
+
+// ===== FILTERS =====
+function populateFilters() {
+  const endpoints = new Set();
+  const statuses = new Set();
+  const methods = new Set();
+  
+  for (const r of requests) {
+    try {
+      const path = new URL(r.url).pathname.replace(/\/\d+$/, '/:id');
+      endpoints.add(path);
+    } catch {}
+    statuses.add(r.status);
+    methods.add(r.method);
+  }
+  
+  $('endpointFilter').innerHTML = '<option value=""> All Endpoints</option>' +
+    [...endpoints].sort().map(e => `<option value="${e}">${e}</option>`).join('');
+  $('statusFilter').innerHTML = '<option value=""> All Statuses</option>' +
+    [...statuses].sort().map(s => `<option value="${s}">${s}</option>`).join('');
+  $('methodFilter').innerHTML = '<option value=""> All Methods</option>' +
+    [...methods].sort().map(m => `<option value="${m}">${m}</option>`).join('');
+
+  $('endpointFilter').addEventListener('change', renderTable);
+  $('statusFilter').addEventListener('change', renderTable);
+  $('methodFilter').addEventListener('change', renderTable);
+  $('searchBox').addEventListener('input', renderTable);
+  
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const k = th.dataset.sort;
+      sortDir = sortKey === k ? -sortDir : 1;
+      sortKey = k;
+      document.querySelectorAll('th[data-sort]').forEach(t => t.classList.remove('active'));
+      th.classList.add('active');
+      renderTable();
+    });
+  });
+}
+
+// ===== RENDER TABLE =====
+function renderTable() {
+  const ep = $('endpointFilter').value;
+  const st = $('statusFilter').value;
+  const mt = $('methodFilter').value;
+  const q = $('searchBox').value.toLowerCase();
+  
+  let rows = requests.filter(r => {
+    let path = r.url;
+    try { path = new URL(r.url).pathname.replace(/\/\d+$/, '/:id'); } catch {}
+    if (ep && path !== ep) return false;
+    if (st && r.status !== st) return false;
+    if (mt && r.method !== mt) return false;
+    if (q) {
+      const searchable = (r.url + ' ' + r.method + ' ' + r.status).toLowerCase();
+      if (!searchable.includes(q)) return false;
+    }
+    return true;
+  });
+  
+  rows.sort((a, b) => {
+    let va = a[sortKey], vb = b[sortKey];
+    if (sortKey === 'time') { va = new Date(va); vb = new Date(vb); }
+    if (typeof va === 'string') return sortDir * va.localeCompare(vb);
+    return sortDir * (va - vb);
+  });
+
+  $('rowCount').textContent = `${rows.length} requests`;
+  $('filterCount').textContent = `Showing ${rows.length} of ${requests.length}`;
+  
+  const html = rows.slice(0, 2000).map(r => {
+    const t = new Date(r.time).toLocaleTimeString([], { 
+      hour12: false, 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit'
+    });
+    
+    const statusClass = r.status?.startsWith('2') ? 'success' : 
+                       r.status?.startsWith('4') ? 'warning' : 'error';
+    
+    const durClass = r.duration > 1000 ? 'very-slow' : (r.duration > 500 ? 'slow' : '');
+    
+    return `<tr>
+      <td style="color: var(--text-muted); font-size: 12px; width: 50px;">#${r.idx}</td>
+      <td style="color: var(--text-muted); font-size: 12px; white-space: nowrap;">${t}</td>
+      <td><span class="method-pill ${r.method}">${r.method}</span></td>
+      <td class="url-cell" title="${r.url}">${r.url}</td>
+      <td><span class="status-pill ${statusClass}">${r.status || '-'}</span></td>
+      <td class="duration-cell ${durClass}">${r.duration.toFixed(2)}</td>
+      <td style="color: var(--text-muted);">${r.waiting !== null ? r.waiting.toFixed(2) : '-'}</td>
+    </tr>`;
+  }).join('');
+  $('reqBody').innerHTML = html || '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;"><i class="fas fa-search"></i> No matching requests</td></tr>';
+}
+</script>
+</body>
+</html>
